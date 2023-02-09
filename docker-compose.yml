@@ -1,0 +1,84 @@
+version: "3"
+        
+services:  
+    # nginx
+    nginx:
+        container_name: Shopping_nginx
+        build: ./docker-assets/nginx
+        volumes:
+            - ./src:/src
+            - ./docker-assets/nginx/conf.d:/etc/nginx/conf.d
+        links:
+            - php-fpm
+        ports:
+            - 8080:8080
+        working_dir: /src
+       
+    # php
+    php-fpm:
+        container_name: Shopping_php-fpm
+        build: ./docker-assets/php
+        links:
+            - mysql
+            - redis
+            - mailhog
+        volumes:
+            - ./src:/src
+        working_dir: /src
+        
+    # database
+    mysql:
+        container_name: Shopping_mysql
+        image: mysql
+        volumes: 
+            - ./database:/var/lib/mysql
+        ports:
+            - 3306:3306
+        command: --default-authentication-plugin=mysql_native_password
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: kbs_test
+            MYSQL_DATABASE: kbs_test
+            MYSQL_USER: kbs
+            MYSQL_PASSWORD: kbs_test
+            
+    # adminer      
+    adminer:
+        container_name: Shopping_adminer
+        image: adminer
+        restart: always
+        links:
+            - mysql
+        ports:
+            - 6080:8080
+        environment:
+            ADMINER_DESIGN: 'pepa-linha'
+            ADMINER_DEFAULT_SERVER: mysql
+
+    # redis
+    redis:
+        container_name: Shopping_redis
+        image: redis:alpine
+     
+    # redis commander 
+    redis-commander:
+        container_name: Shopping_redis_commander
+        hostname: redis-commander
+        image: rediscommander/redis-commander:latest
+        restart: always
+        links:
+            - redis
+        environment:
+            - REDIS_HOST=redis
+            - REDIS_PORT=6379
+        ports:
+            - 6081:8081
+
+    # mailhog       
+    mailhog:
+        container_name: Shopping_mailhog
+        image: mailhog/mailhog
+        ports: 
+            - 1025:1025
+            - 6082:8025
+    
